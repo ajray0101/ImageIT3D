@@ -1,0 +1,20 @@
+{
+  "name": "imageit3d-launchit3d",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "ImageIT3D + LaunchIT3D: idea-to-listing pipeline for non-technical 3D print sellers (SEMO capstone)",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18.18" },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "express": "4.22.3"
+  },
+  "devDependencies": {
+    "three": "0.128.0"
+  }
+}

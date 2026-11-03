@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ImageIT3D + LaunchIT3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="mark">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="21" width="24" height="4" rx="1" fill="currentColor" opacity=".25"/><path d="M8 21 L10 9 Q15 5 20 9 L22 21 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.2 16h11.6M9.8 12.5h10.4" stroke="currentColor" stroke-width="1.5" opacity=".55"/></svg>
+      ImageIT3D + LaunchIT3D <small>idea to listing</small>
+    </div>
+    <button class="linkbtn" id="aboutBtn">About this project</button>
+  </header>
+
+  <main class="shell">
+    <section class="stage" aria-label="3D model preview">
+      <div id="viewport" role="img" aria-label="Interactive 3D preview of your model on the printer bed. Drag to rotate, scroll to zoom."></div>
+      <div class="verdict" id="verdict" data-level="pass"><b>Ready to print</b><span id="verdictSub">All checks passed</span></div>
+      <div class="stagebar">
+        <div class="name" id="modelName">Model</div>
+        <div class="dims" id="dims"></div>
+        <div class="swatches" id="swatches" role="group" aria-label="Filament color"></div>
+      </div>
+    </section>
+
+    <section class="work">
+      <nav class="steps" role="tablist" aria-label="Pipeline steps">
+        <button role="tab" id="tab-design" aria-controls="p-design" aria-selected="true"><span class="n">1</span>Design</button>
+        <span class="app-split" aria-hidden="true"></span>
+        <button role="tab" id="tab-check" aria-controls="p-check" aria-selected="false" tabindex="-1"><span class="n">2</span>Printability</button>
+        <button role="tab" id="tab-price" aria-controls="p-price" aria-selected="false" tabindex="-1"><span class="n">3</span>Price</button>
+        <button role="tab" id="tab-listing" aria-controls="p-listing" aria-selected="false" tabindex="-1"><span class="n">4</span>Listing</button>
+        <button role="tab" id="tab-export" aria-controls="p-export" aria-selected="false" tabindex="-1"><span class="n">5</span>Export</button>
+      </nav>
+
+      <!-- 1 DESIGN -->
+      <div class="panel" id="p-design" role="tabpanel" aria-labelledby="tab-design">
+        <div class="appname">ImageIT3D</div>
+        <h2>Describe what you want to sell</h2>
+        <p class="lede">Tell the assistant about your product in plain words. It builds a printable model you can refine by chatting or with the sliders below.</p>
+        <div class="starters" id="starters"></div>
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="composer">
+          <textarea id="prompt" rows="2" placeholder="e.g. A tall twisted vase with ribs, about 18 cm"></textarea>
+          <button class="btn" id="send">Send</button>
+        </div>
+        <p class="note" id="aiNote"></p>
+
+        <section class="block" aria-labelledby="lettersH">
+          <h3 id="lettersH">Letters</h3>
+          <p class="note" id="textWhere"></p>
+          <div class="fields">
+            <div class="field" style="grid-column:1/-1"><label for="tText">Text to raise on the item</label><input id="tText" maxlength="24" placeholder="e.g. HOME, a name, or your shop name"></div>
+            <div class="field slider"><label for="tSize"><span>Letter height</span><output id="tSizeOut"></output></label><input type="range" id="tSize" min="3" max="40" step="0.5"></div>
+            <div class="field slider"><label for="tDepth"><span>Raised by</span><output id="tDepthOut"></output></label><input type="range" id="tDepth" min="0.4" max="3" step="0.1"></div>
+          </div>
+        </section>
+
+        <section class="block" aria-labelledby="meshyH">
+          <h3 id="meshyH">Detailed model from Meshy</h3>
+          <p class="note">Import an STL, OBJ or GLB file (from Meshy or anywhere else) for printability checks, pricing, a listing and the seller package.</p>
+          <div class="actions">
+            <label class="btn ghost filebtn" tabindex="0" id="importLabel">Import model file<input type="file" id="importFile" accept=".stl,.obj,.glb" hidden></label>
+            <a class="btn ghost" href="https://www.meshy.ai" target="_blank" rel="noopener">Open Meshy</a>
+          </div>
+          <p class="status" id="importStatus" aria-live="polite"></p>
+          <div id="meshyGen" hidden>
+            <div class="fields"><div class="field" style="grid-column:1/-1"><label for="meshyPrompt">Or describe a detailed model and generate it here</label><textarea id="meshyPrompt" rows="2" maxlength="800" placeholder="e.g. A small sleeping fox curled up on a flat round base"></textarea></div></div>
+            <div class="actions"><button class="btn" id="meshyGo">Generate with Meshy</button></div>
+            <p class="status" id="meshyStatus" aria-live="polite"></p>
+          </div>
+        </section>
+        <details class="adjust" id="adjust">
+          <summary>Adjust shape by hand</summary>
+          <div class="sliders" id="sliders"></div>
+        </details>
+        <div class="next"><button class="btn ghost" data-go="check">Check printability</button></div>
+      </div>
+
+      <!-- 2 CHECK -->
+      <div class="panel" id="p-check" role="tabpanel" aria-labelledby="tab-check" hidden>
+        <div class="appname">LaunchIT3D</div>
+        <h2>Will it print?</h2>
+        <p class="lede">The model is checked against your printer and material before you spend filament on it.</p>
+        <div class="fields">
+          <div class="field"><label for="printer">Printer</label><select id="printer"></select></div>
+          <div class="field"><label for="material">Material</label><select id="material"><option value="PLA">PLA</option><option value="PETG">PETG</option></select></div>
+          <div class="field"><label for="infill">Infill <output id="infillOut"></output></label><input type="range" id="infill" min="5" max="60" step="5"></div>
+        </div>
+        <ul class="checks" id="checks"></ul>
+        <dl class="stats" id="stats"></dl>
+        <p class="note">Filament and time are estimates from model volume and surface area at 0.2 mm layers. Your slicer will give exact numbers.</p>
+        <div class="next"><button class="btn ghost" data-go="price">Work out a price</button></div>
+      </div>
+
+      <!-- 3 PRICE -->
+      <div class="panel" id="p-price" role="tabpanel" aria-labelledby="tab-price" hidden>
+        <div class="appname">LaunchIT3D</div>
+        <h2>Price guidance</h2>
+        <p class="lede">Your cost to make one, plus marketplace fees, turned into three price points.</p>
+        <div class="fields">
+          <div class="field"><label for="market">Selling on</label><select id="market"></select></div>
+          <div class="field"><label for="cFil">Filament cost ($ per kg)</label><input type="number" id="cFil" min="5" max="200" step="1"></div>
+          <div class="field"><label for="cLabMin">Your hands-on time (minutes)</label><input type="number" id="cLabMin" min="0" max="240" step="1"></div>
+          <div class="field"><label for="cLabRate">Your hourly rate ($)</label><input type="number" id="cLabRate" min="0" max="200" step="1"></div>
+          <div class="field"><label for="cPack">Packaging ($)</label><input type="number" id="cPack" min="0" max="50" step="0.25"></div>
+        </div>
+        <table class="cost" id="costTable"></table>
+        <div class="tiers" id="tiers"></div>
+        <p class="note" id="feeNote"></p>
+        <div class="next"><button class="btn ghost" data-go="listing">Write the listing</button></div>
+      </div>
+
+      <!-- 4 LISTING -->
+      <div class="panel" id="p-listing" role="tabpanel" aria-labelledby="tab-listing" hidden>
+        <div class="appname">LaunchIT3D</div>
+        <h2>Marketplace listing</h2>
+        <p class="lede">Generate a title, description and tags from your model, then edit anything you like.</p>
+        <div class="fields">
+          <div class="field" style="grid-column:1/-1"><label for="sellerNotes">Anything buyers should know? (optional)</label><input id="sellerNotes" placeholder="e.g. Made to order, ships in 3 days, great gift for plant lovers"></div>
+        </div>
+        <button class="btn" id="genListing">Write listing</button>
+        <p class="status" id="listingStatus" aria-live="polite"></p>
+        <div class="out"><div class="row"><label for="lTitle">Title</label><span class="count" id="cTitle"></span></div><input id="lTitle"><button class="copy" data-copy="lTitle">Copy title</button></div>
+        <div class="out"><div class="row"><label for="lDesc">Description</label></div><textarea id="lDesc" rows="10"></textarea><button class="copy" data-copy="lDesc">Copy description</button></div>
+        <div class="out"><div class="row"><label for="lTags">Tags, separated by commas</label><span class="count" id="cTags"></span></div><textarea id="lTags" rows="3"></textarea><button class="copy" data-copy="lTags">Copy tags</button></div>
+        <div class="next"><button class="btn ghost" data-go="export">Export seller package</button></div>
+      </div>
+
+      <!-- 5 EXPORT -->
+      <div class="panel" id="p-export" role="tabpanel" aria-labelledby="tab-export" hidden>
+        <div class="appname">LaunchIT3D</div>
+        <h2>Seller package</h2>
+        <p class="lede">Everything you need to print and list, in one zip file.</p>
+        <ul class="files" id="fileList"></ul>
+        <div class="actions">
+          <button class="btn" id="dlZip">Download seller package</button>
+          <button class="btn ghost" id="dlStl">Download model only (.stl)</button>
+        </div>
+        <p class="status" id="exportStatus" aria-live="polite"></p>
+        <section class="block" id="library" aria-labelledby="libraryH" hidden>
+          <h3 id="libraryH">Project library</h3>
+          <p class="note">Save this product on the project server and reopen it later.</p>
+          <div class="actions"><button class="btn" id="saveProject">Save project</button></div>
+          <p class="status" id="libraryStatus" aria-live="polite"></p>
+          <ul class="files" id="projectList"></ul>
+        </section>
+        <div class="next"><button class="btn ghost" id="startOver">Start a new product</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="about">
+  <div class="inner">
+    <h2>ImageIT3D + LaunchIT3D</h2>
+    <p>A two-application pipeline that takes non-technical sellers from a 3D model idea to a marketplace-ready listing. Capstone project, Southeast Missouri State University.</p>
+    <p><b>ImageIT3D</b> handles conversational design and model generation. <b>LaunchIT3D</b> handles printability analysis, marketplace copy, price guidance and the seller package export.</p>
+    <p><b>Team:</b> Austin Ray, Caleb Palmer, Alec Burke, Kaitlynn Hoffenberger, Dillen Risher.</p>
+    <p><b>Notes</b></p>
+    <ul>
+      <li>Built-in shapes use parametric product templates (vessels, tags, stands). Raised letters can be added to any of them.</li>
+      <li>Detailed AI models come from Meshy through the project server, or from an imported STL, OBJ or GLB file.</li>
+      <li>Fees, print time and filament use are estimates. Check current marketplace fees before listing.</li>
+    </ul>
+    <div class="actions"><button class="btn" id="aboutClose">Close</button></div>
+  </div>
+</dialog>
+
+<!-- Libraries (browser globals). The app code in js/ is loaded as ES modules after these. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
