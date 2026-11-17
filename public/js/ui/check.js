@@ -28,7 +28,7 @@ export function render(ctx) {
   const stats = [
     ["Size", `${A.size.map(v => v.toFixed(0)).join(" × ")} mm`], ["Volume", (A.vol / 1000).toFixed(1) + " cm³"],
     ["Filament", E.grams.toFixed(0) + " g"], ["Print time", fmtHours(E.hours)],
-    ["Thinnest wall", Number.isNaN(A.minWall) ? "Not measured" : A.minWall.toFixed(1) + " mm"]
+    ["Thinnest wall", !Number.isFinite(A.minWall) ? "Not measured" : A.minWall.toFixed(1) + " mm"]
   ];
   $("#stats").replaceChildren(...stats.map(([k, v]) => {
     const d = document.createElement("div"); d.innerHTML = "<dt></dt><dd></dd>";

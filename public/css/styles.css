@@ -163,3 +163,12 @@ dialog ul{padding-left:20px;margin:8px 0}
 #projectList span{display:block;text-align:left}
 #projectList .actions{margin-top:0;flex-wrap:nowrap}
 #projectList .btn{padding:7px 12px;font-size:.88rem}
+
+/* Filament / full-color preview toggle */
+.viewmode{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.viewmode button{border:0;background:none;padding:5px 12px;font-size:.85rem;cursor:pointer;color:var(--muted)}
+.viewmode button[aria-pressed="true"]{background:var(--teal);color:var(--panel);font-weight:700}
+.swatches.dimmed{opacity:.35;pointer-events:none}
+#colorTools{margin-top:18px}
+#colorTools h3{font-size:1rem;margin-bottom:2px}
+.viewmode[hidden]{display:none}

@@ -7,6 +7,7 @@ import { rateLimit } from "../middleware/rateLimit.js";
 import { complete, parseJSON } from "../services/anthropicClient.js";
 import { DESIGN_PROMPT } from "../prompts/design.js";
 import { LISTING_SYSTEM, listingPrompt } from "../prompts/listing.js";
+import { checkPrompt, BLOCKED_MESSAGE } from "../../public/js/config/content-rules.js";
 
 const router = Router();
 const str = (v, max) => String(v ?? "").slice(0, max);
@@ -23,11 +24,15 @@ router.post("/design", asyncRoute(async (req, res) => {
   while (turns.length && turns[0].role !== "user") turns.shift();
   if (!turns.length || turns[turns.length - 1].role !== "user") throw userError(400, "Send the seller's message last.");
   const last = turns[turns.length - 1];
+  if (!checkPrompt(last.content).allowed) return res.json({ reply: BLOCKED_MESSAGE, model: null, generate: null });
   last.content = `Current model: ${JSON.stringify(req.body?.spec || null).slice(0, 4000)}\n\nSeller says: ${last.content}`;
 
   const out = parseJSON(await complete({ system: DESIGN_PROMPT, messages: turns }));
   if (typeof out.reply !== "string") throw userError(502, "Claude's answer was missing a reply.");
-  res.json({ reply: out.reply, model: out.model || null }); // the browser re-validates the model
+  // "generate" asks the browser to send a description to Meshy. Filter it here too.
+  let generate = typeof out.generate === "string" ? str(out.generate, 500).trim() : null;
+  if (generate && !checkPrompt(generate).allowed) return res.json({ reply: BLOCKED_MESSAGE, model: null, generate: null });
+  res.json({ reply: out.reply, model: generate ? null : out.model || null, generate }); // the browser re-validates the model
 }));
 
 // Body: listing details from the browser -> { title, description, tags[] }

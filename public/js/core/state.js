@@ -13,7 +13,9 @@ export function defaultState() {
     color: 0, printer: "a1", material: "PLA", infill: 15,
     market: "etsy", costs: { filament: 22, laborMin: 10, laborRate: 18, packaging: 1.5 },
     notes: "", listing: { title: "", description: "", tags: "" },
-    projectId: null
+    projectId: null,
+    meshyTask: null,   // { id, prompt } when the current model was generated with Meshy
+    showColor: false   // show Meshy's full-color version instead of the filament color
   };
 }
 

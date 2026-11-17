@@ -11,6 +11,7 @@ function renderFiles(ctx) {
     ["printability-report.txt", "Every check with fixes"], ["pricing.csv", "Cost breakdown and three price points"],
     ["specs.json", "Model settings to reopen or rebuild it"]
   ];
+  if (ctx.state.spec.template === "imported" && ctx.hasColor()) f.splice(1, 0, [`${ctx.slug()}-color.glb`, "Full-color model for previews and listing photos (not for printing)"]);
   $("#fileList").replaceChildren(...f.map(([n, d]) => {
     const li = document.createElement("li"); li.innerHTML = "<code></code><span></span>";
     li.children[0].textContent = n; li.children[1].textContent = d;
@@ -58,10 +59,16 @@ export function init(ctx) {
     try {
       ensureListing(ctx);
       st.textContent = "Packing files…";
-      const blob = await buildPackage({ state: ctx.state, current: ctx.current, colorName: ctx.colorName(), dims: ctx.dimsText(), slug: ctx.slug() });
+      const colorGlb = ctx.state.spec.template === "imported" && ctx.hasColor() ? ctx.colorBuffer : null;
+      const blob = await buildPackage({ state: ctx.state, current: ctx.current, colorName: ctx.colorName(), dims: ctx.dimsText(), slug: ctx.slug(), colorGlb });
       downloadBlob(`${ctx.slug()}-seller-package.zip`, blob);
       st.textContent = `Saved ${ctx.slug()}-seller-package.zip.`;
     } catch (e) { st.textContent = e.message; }
+  });
+  $("#dlGlb").addEventListener("click", () => {
+    if (!ctx.colorBuffer) return;
+    downloadBlob(`${ctx.slug()}-color.glb`, new Blob([ctx.colorBuffer], { type: "model/gltf-binary" }));
+    st.textContent = `Saved ${ctx.slug()}-color.glb.`;
   });
   $("#startOver").addEventListener("click", () => ctx.startOver());
 
