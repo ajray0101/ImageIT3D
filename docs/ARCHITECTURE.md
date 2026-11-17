@@ -60,6 +60,7 @@ Keys are read from `.env` in `server/config.js` and never sent to the browser. E
 | --- | --- | --- |
 | `GET /api/health` | | `{ meshy, assistant, projects }` |
 | `POST /api/meshy/preview` | `{ prompt }` | `{ taskId }` |
+| `POST /api/meshy/refine` | `{ previewTaskId, texturePrompt }` | `{ taskId }` (adds colors to a generated model) |
 | `GET /api/meshy/tasks/:id` | | `{ status, progress, thumbnail, error, formats }` |
 | `GET /api/meshy/tasks/:id/model?format=glb` | | The model file |
 | `POST /api/assistant/design` | `{ messages, spec }` | `{ reply, model }` |
@@ -77,6 +78,10 @@ Errors are always JSON: `{ "error": "Plain-language message" }`.
 ### Add a printer, material or marketplace
 
 Add an entry to `PRINTERS`, `MATERIALS` or `MARKETS` in `public/js/config/catalog.js`. The dropdowns and calculations pick it up automatically.
+
+### Change what the app refuses to make
+
+Edit the word lists in `public/js/config/content-rules.js`. The browser uses it for instant feedback, and the server imports the same file for the real check (`/api/meshy/preview` and `/api/assistant/design`), so one edit covers both. Add everyday products that contain a blocked word (like "bath bomb") to `SAFE_PHRASES`. Add a case to `tests/content.test.js` for every change. Meshy's own moderation (`moderation: true`) is a final layer after ours.
 
 ### Add a printability check
 

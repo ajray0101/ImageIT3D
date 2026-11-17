@@ -3,9 +3,12 @@ import { Router } from "express";
 import { config } from "../config.js";
 import { asyncRoute, userError } from "../middleware/asyncRoute.js";
 import { rateLimit } from "../middleware/rateLimit.js";
-import { createPreview, getTask, downloadModel } from "../services/meshyClient.js";
+import { createPreview, createRefine, getTask, downloadModel, MAX_PROMPT } from "../services/meshyClient.js";
+import { checkPrompt } from "../../public/js/config/content-rules.js";
 
 const router = Router();
+// One shared limit for everything that spends Meshy credits (new models and colors).
+const meshyLimit = rateLimit({ max: config.meshyMaxPerHour, message: `Limit of ${config.meshyMaxPerHour} Meshy requests per hour reached. Try again later.` });
 const validId = id => /^[A-Za-z0-9-]{8,64}$/.test(id);
 const TYPES = { glb: "model/gltf-binary", stl: "model/stl", obj: "text/plain" };
 
@@ -13,12 +16,29 @@ router.use((req, res, next) => (config.meshyKey ? next() : res.status(503).json(
 
 // Start a Text to 3D preview task.
 router.post("/preview",
-  rateLimit({ max: config.meshyMaxPerHour, message: `Limit of ${config.meshyMaxPerHour} generations per hour reached. Try again later.` }),
+  meshyLimit,
   asyncRoute(async (req, res) => {
     const prompt = String(req.body?.prompt || "").trim();
     if (!prompt) throw userError(400, "Describe the model first.");
-    if (prompt.length > 800) throw userError(400, "Keep the description under 800 characters.");
+    if (prompt.length > MAX_PROMPT) throw userError(400, `Keep the description under ${MAX_PROMPT} characters.`);
+    const verdict = checkPrompt(prompt);   // the server is the real gate; browser checks can be bypassed
+    if (!verdict.allowed) throw userError(422, verdict.message);
     res.json({ taskId: await createPreview(prompt) });
+  }));
+
+// Add colors to a finished preview task. Shares the hourly limit with new models.
+router.post("/refine",
+  meshyLimit,
+  asyncRoute(async (req, res) => {
+    const previewTaskId = String(req.body?.previewTaskId || "");
+    if (!validId(previewTaskId)) throw userError(400, "Invalid task id.");
+    const texturePrompt = String(req.body?.texturePrompt || "").trim();
+    if (texturePrompt.length > 800) throw userError(400, "Keep the color description under 800 characters.");
+    if (texturePrompt) {
+      const verdict = checkPrompt(texturePrompt);
+      if (!verdict.allowed) throw userError(422, verdict.message);
+    }
+    res.json({ taskId: await createRefine(previewTaskId, texturePrompt) });
   }));
 
 // Status and progress. Never returns Meshy's signed file URLs.

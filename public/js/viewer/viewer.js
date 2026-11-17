@@ -22,6 +22,26 @@ export function createViewer(container, { color }) {
   const clip = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e4);
   const material = new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.02, clippingPlanes: [clip], side: THREE.DoubleSide });
   let mesh = null, bed = null, printer = null, reveal = 1;
+  // Full-color model from Meshy (textured GLB scene), shown instead of the filament-colored mesh.
+  const colorOuter = new THREE.Group(), colorInner = new THREE.Group();
+  colorOuter.add(colorInner); colorOuter.visible = false; scene.add(colorOuter);
+  let hasColor = false, colorOn = false, colorTurn = 0;
+
+  // Place the color model exactly where the printable mesh is: same tilt, height and position.
+  function fitColor() {
+    if (!hasColor || !mesh) return;
+    colorInner.rotation.set(colorTurn * Math.PI / 180, 0, 0);
+    colorOuter.scale.setScalar(1); colorOuter.position.set(0, 0, 0); colorOuter.updateMatrixWorld(true);
+    let box = new THREE.Box3().setFromObject(colorInner);
+    colorOuter.scale.setScalar(mesh.userData.h / Math.max(box.max.y - box.min.y, 1e-6));
+    colorOuter.updateMatrixWorld(true);
+    box = new THREE.Box3().setFromObject(colorInner);
+    colorOuter.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+  }
+  function applyVisibility() {
+    colorOuter.visible = hasColor && colorOn;
+    if (mesh) mesh.visible = !(hasColor && colorOn);
+  }
 
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
@@ -60,6 +80,15 @@ export function createViewer(container, { color }) {
   })();
 
   return {
+    // object: a three.js scene from a textured GLB, or null to remove it. turn: the model's tip-over angle.
+    setColorModel(object, turn = 0) {
+      colorInner.clear();
+      hasColor = Boolean(object);
+      if (object) { colorInner.add(object); colorTurn = turn; fitColor(); }
+      applyVisibility();
+    },
+    setColorMode(on) { colorOn = on; applyVisibility(); },
+    setColorTurn(turn) { colorTurn = turn; fitColor(); },
     setPrinter(p) { printer = p; drawBed(); },
     setColor(hex) { material.color.set(hex); },
     // Show a mesh ({pos, idx}). animate: reframe the camera and play the print reveal.
@@ -71,6 +100,7 @@ export function createViewer(container, { color }) {
       mesh = new THREE.Mesh(flat, material);
       flat.computeBoundingBox(); const bb = flat.boundingBox; mesh.userData.h = bb.max.y;
       scene.add(mesh);
+      fitColor(); applyVisibility();
       if (animate) {
         const size = bb.getSize(new THREE.Vector3()), r = Math.max(size.x, size.y, size.z, 40);
         controls.target.set(0, size.y / 2, 0);

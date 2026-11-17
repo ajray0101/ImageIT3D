@@ -4,6 +4,7 @@
 import { PRESETS, TEMPLATES } from "../config/catalog.js";
 import { deepCopy } from "../core/utils.js";
 import { features, api } from "./api.js";
+import { checkPrompt } from "../config/content-rules.js";
 
 // Pull quoted text or "says HOME"-style words out of a message.
 export function findText(text) {
@@ -49,9 +50,26 @@ export function localDesigner(text, current) {
   return { reply: `Here's a ${spec.name.toLowerCase()} to start from. Adjust it with the sliders or tell me what to change.`, model: spec };
 }
 
-// Returns { reply, model, source } where source is "claude" or "built-in".
+// "Can you create a small dog please" -> "a small dog"
+export function cleanRequest(text) {
+  return text.trim()
+    .replace(/^(please\s+)?(can|could|would)\s+you\s+/i, "")
+    .replace(/^(i\s+(want|need|would like|'d like)|i'm\s+looking\s+for|create|make|generate|design|build|give\s+me|show\s+me)\s+(me\s+)?/i, "")
+    .replace(/[\s,]*(please|thanks|thank you)[.!]*$/i, "")
+    .replace(/[.!?]+$/, "")
+    .trim() || text.trim();
+}
+
+// Returns { reply, model, generate, source }.
+//  model:    a template spec to show right away
+//  generate: a description to send to Meshy (for things the templates can't make)
 export async function designReply({ text, spec, chat, hasImport }) {
-  if ((await features()).assistant) {
+  const verdict = checkPrompt(text);
+  if (!verdict.allowed) return { reply: verdict.message, model: null, generate: null, source: "rules" };
+  const f = await features();
+  let result = null;
+
+  if (f.assistant) {
     try {
       const turns = chat.filter((m, i) => !(i === 0 && m.role === "assistant")).slice(-12);
       const r = await api("/api/assistant/design", { method: "POST", body: { messages: turns, spec } });
@@ -59,14 +77,29 @@ export async function designReply({ text, spec, chat, hasImport }) {
         let model = r.model && TEMPLATES[r.model.template] ? r.model : null;
         if (model && model.template === "imported" && !hasImport) model = null;
         if (model && !model.text) model.text = spec.text;
-        return { reply: r.reply, model, source: "claude" };
+        result = { reply: r.reply, model, generate: typeof r.generate === "string" && r.generate ? r.generate : null, source: "claude" };
       }
     } catch (e) {
-      const local = localDesigner(text, spec);
-      return { ...local, source: "built-in", note: `Claude couldn't answer (${e.message}), so the built-in designer did.` };
+      result = { ...localDesigner(text, spec), generate: null, source: "built-in", note: `Claude couldn't answer (${e.message}), so the built-in designer did.` };
     }
   }
-  return { ...localDesigner(text, spec), source: "built-in" };
+  if (!result) result = { ...localDesigner(text, spec), generate: null, source: "built-in" };
+
+  // Nothing in the templates fits: hand the description to Meshy if it's available.
+  if (!result.model && !result.generate && result.source === "built-in" && f.meshy) {
+    const description = cleanRequest(text);
+    result = { ...result, reply: `I'll generate "${description}" with Meshy. This usually takes a few minutes.`, generate: description };
+  } else if (!result.model && !result.generate && result.source === "built-in") {
+    result.reply = "I can make vases, planters, pen holders, bowls, coasters, trays, keychain tags and phone stands. " +
+      "To make anything else, like animals or figures, the project server needs a Meshy API key (MESHY_API_KEY in .env).";
+  }
+  if (result.generate && !f.meshy) {
+    result = { ...result, generate: null, reply: result.reply + " (Generating custom shapes needs a Meshy API key on the server.)" };
+  }
+  if (result.generate && !checkPrompt(result.generate).allowed) {
+    result = { reply: checkPrompt(result.generate).message, model: null, generate: null, source: "rules" };
+  }
+  return result;
 }
 
 // Template listing used when Claude isn't available.

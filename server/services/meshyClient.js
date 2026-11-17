@@ -2,20 +2,28 @@
 import { config } from "../config.js";
 import { userError } from "../middleware/asyncRoute.js";
 
-const BASE = "https://api.meshy.ai/openapi/v2/text-to-3d";
 
 async function call(path = "", init = {}) {
-  const r = await fetch(BASE + path, {
-    ...init,
-    headers: { Authorization: `Bearer ${config.meshyKey}`, "Content-Type": "application/json", ...(init.headers || {}) }
-  });
+  let r;
+  try {
+    r = await fetch(config.meshyBaseUrl + path, {
+      ...init,
+      headers: { Authorization: `Bearer ${config.meshyKey}`, "Content-Type": "application/json", ...(init.headers || {}) }
+    });
+  } catch {
+    throw userError(502, "Couldn't reach Meshy. Check the server's internet connection and try again.");
+  }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const msg = { 401: "Meshy rejected the API key.", 402: "The Meshy account is out of credits or needs a paid plan.", 429: "Meshy is rate limiting requests. Wait a minute." }[r.status];
+    const msg = { 401: "Meshy rejected the API key.", 402: "The Meshy account is out of credits or needs a paid plan.", 403: "Meshy's content filter blocked that description. Try describing something else.", 429: "Meshy is rate limiting requests. Wait a minute." }[r.status];
     throw userError(r.status, msg || data.message || "Meshy didn't accept the request.");
   }
   return data;
 }
+
+// Added to every request so Meshy aims for something a home printer can handle.
+export const PRINT_GUIDANCE = "Single solid object for 3D printing, standing on a flat base, chunky sturdy proportions, no thin fragile parts.";
+export const MAX_PROMPT = 800 - PRINT_GUIDANCE.length - 2; // Meshy accepts up to 800 characters in total
 
 // Preview = geometry only, which is all a 3D print needs (refine only adds textures).
 export async function createPreview(prompt) {
@@ -23,7 +31,7 @@ export async function createPreview(prompt) {
     method: "POST",
     body: JSON.stringify({
       mode: "preview",
-      prompt,
+      prompt: `${prompt.replace(/[.\s]+$/, "")}. ${PRINT_GUIDANCE}`,
       ai_model: "latest",
       should_remesh: true,       // keeps triangle counts manageable for the browser checks
       target_polycount: 100000,
@@ -31,6 +39,14 @@ export async function createPreview(prompt) {
       moderation: true
     })
   });
+  return data.result; // task id
+}
+
+// Refine = paint colors (textures) onto a finished preview. Same mesh, now in color.
+export async function createRefine(previewTaskId, texturePrompt) {
+  const body = { mode: "refine", preview_task_id: previewTaskId, target_formats: ["glb"], moderation: true };
+  if (texturePrompt) body.texture_prompt = texturePrompt;
+  const data = await call("", { method: "POST", body: JSON.stringify(body) });
   return data.result; // task id
 }
 

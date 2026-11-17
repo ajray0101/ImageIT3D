@@ -46,3 +46,11 @@ export function nameFromFile(fileName) {
   return fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim()
     .replace(/\b\w/g, c => c.toUpperCase()).slice(0, 60) || "Imported Model";
 }
+
+// Load a textured GLB (from Meshy's color step) as a three.js scene for display only.
+// The printable mesh is unchanged; this just shows what the painted model looks like.
+export async function parseColorScene(buf) {
+  if (!THREE.GLTFLoader) throw new Error("The model reader didn't load. Reload the page and try again.");
+  const gltf = await new Promise((res, rej) => new THREE.GLTFLoader().parse(buf.slice(0), "", res, rej));
+  return gltf.scene;
+}

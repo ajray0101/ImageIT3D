@@ -50,6 +50,7 @@ export const PRESETS = {
 // Quick-start chips in the Design chat.
 export const STARTERS = [
   "A ribbed vase about 15 cm tall",
+  "A small dog sitting",
   "Coaster that says HOME",
   "Phone stand for my desk",
   "Keychain tag for gifts",

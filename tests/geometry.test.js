@@ -59,6 +59,13 @@ test("pricing covers cost and fees at every tier", () => {
   }
 });
 
+test("a mesh with no wall-thickness value is reported as not measured, not a crash", () => {
+  const { mesh } = buildModel(sanitizeSpec(PRESETS.tag));
+  delete mesh.minWall; // regression: evaluate() used to call toFixed() on undefined
+  const E = evaluate(analyze(mesh), settings);
+  assert.equal(E.checks.find(c => c.t === "Wall thickness not measured")?.l, "warn");
+});
+
 test("STL export writes one 50-byte record per triangle", () => {
   const { mesh } = buildModel(sanitizeSpec(PRESETS.tag));
   const buf = toSTL(mesh, "tag");

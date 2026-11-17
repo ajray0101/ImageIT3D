@@ -11,6 +11,8 @@ export const config = {
   dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(root, "data"),
 
   meshyKey: process.env.MESHY_API_KEY || "",
+  // Only change this to point at the mock server (npm run mock:meshy) for testing without credits.
+  meshyBaseUrl: process.env.MESHY_BASE_URL || "https://api.meshy.ai/openapi/v2/text-to-3d",
   meshyMaxPerHour: Number(process.env.MESHY_MAX_PER_HOUR || 10),
 
   anthropicKey: process.env.ANTHROPIC_API_KEY || "",

@@ -51,7 +51,7 @@ export function evaluate(A, { printer, material, infill, textInfo }) {
   else checks.push({ l: "fail", t: "Mesh has holes", d: `${A.badEdges} open or doubled edges. Repair the mesh before slicing (most slicers have a "Fix model" option).` });
 
   const w = A.minWall;
-  if (Number.isNaN(w)) checks.push({ l: "warn", t: "Wall thickness not measured", d: "Imported models can have very thin parts like fingers, antennae or hair. Check them in your slicer's preview before printing." });
+  if (!Number.isFinite(w)) checks.push({ l: "warn", t: "Wall thickness not measured", d: "Imported models can have very thin parts like fingers, antennae or hair. Check them in your slicer's preview before printing." });
   else if (w >= 1.2) checks.push({ l: "pass", t: "Walls are thick enough", d: `Thinnest wall is ${w.toFixed(1)} mm, comfortable for a 0.4 mm nozzle.` });
   else if (w >= 0.8) checks.push({ l: "warn", t: "Thin walls", d: `Thinnest wall is ${w.toFixed(1)} mm. It will print but may feel fragile. 1.2 mm or more is safer.` });
   else checks.push({ l: "fail", t: "Walls too thin to print", d: `Thinnest wall is ${w.toFixed(1)} mm. Raise it to at least 0.8 mm, ideally 1.2 mm.` });

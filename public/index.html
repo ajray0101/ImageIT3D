@@ -26,6 +26,10 @@
       <div class="stagebar">
         <div class="name" id="modelName">Model</div>
         <div class="dims" id="dims"></div>
+        <div class="viewmode" id="viewMode" role="group" aria-label="Preview colors" hidden>
+          <button type="button" data-mode="filament" aria-pressed="true">Filament</button>
+          <button type="button" data-mode="color" aria-pressed="false">Full color</button>
+        </div>
         <div class="swatches" id="swatches" role="group" aria-label="Filament color"></div>
       </div>
     </section>
@@ -44,7 +48,7 @@
       <div class="panel" id="p-design" role="tabpanel" aria-labelledby="tab-design">
         <div class="appname">ImageIT3D</div>
         <h2>Describe what you want to sell</h2>
-        <p class="lede">Tell the assistant about your product in plain words. It builds a printable model you can refine by chatting or with the sliders below.</p>
+        <p class="lede">Describe what you want in plain words. Simple products like vases, coasters, tags and stands are built instantly. Anything else, like animals, figures or sculptures, is generated with Meshy.</p>
         <div class="starters" id="starters"></div>
         <div class="chat" id="chat" aria-live="polite"></div>
         <div class="composer">
@@ -68,13 +72,19 @@
           <p class="note">Import an STL, OBJ or GLB file (from Meshy or anywhere else) for printability checks, pricing, a listing and the seller package.</p>
           <div class="actions">
             <label class="btn ghost filebtn" tabindex="0" id="importLabel">Import model file<input type="file" id="importFile" accept=".stl,.obj,.glb" hidden></label>
-            <a class="btn ghost" href="https://www.meshy.ai" target="_blank" rel="noopener">Open Meshy</a>
           </div>
           <p class="status" id="importStatus" aria-live="polite"></p>
           <div id="meshyGen" hidden>
             <div class="fields"><div class="field" style="grid-column:1/-1"><label for="meshyPrompt">Or describe a detailed model and generate it here</label><textarea id="meshyPrompt" rows="2" maxlength="800" placeholder="e.g. A small sleeping fox curled up on a flat round base"></textarea></div></div>
             <div class="actions"><button class="btn" id="meshyGo">Generate with Meshy</button></div>
             <p class="status" id="meshyStatus" aria-live="polite"></p>
+          </div>
+          <div id="colorTools" hidden>
+            <h3>Colors</h3>
+            <p class="note">Meshy can paint colors onto the model you generated, so you can see the finished look and use it for listing photos. This uses extra Meshy credits and takes a few minutes. The STL you print is still one filament color.</p>
+            <div class="fields"><div class="field" style="grid-column:1/-1"><label for="colorPrompt">Describe the colors</label><textarea id="colorPrompt" rows="2" maxlength="600" placeholder="e.g. White body, black coal eyes, orange carrot nose, black top hat"></textarea></div></div>
+            <div class="actions"><button class="btn" id="addColors">Add colors</button></div>
+            <p class="status" id="colorStatus" aria-live="polite"></p>
           </div>
         </section>
         <details class="adjust" id="adjust">
@@ -143,6 +153,7 @@
         <div class="actions">
           <button class="btn" id="dlZip">Download seller package</button>
           <button class="btn ghost" id="dlStl">Download model only (.stl)</button>
+          <button class="btn ghost" id="dlGlb" hidden>Download color model (.glb)</button>
         </div>
         <p class="status" id="exportStatus" aria-live="polite"></p>
         <section class="block" id="library" aria-labelledby="libraryH" hidden>

@@ -33,6 +33,9 @@ Each teammate uses their own `.env`. It's in `.gitignore`; never commit it. If a
 | `npm start` | Runs the server at http://localhost:3000 |
 | `npm run dev` | Same, but restarts when server files change |
 | `npm test` | Geometry, printability, pricing and API tests (also runs on every pull request) |
+| `npm run mock:meshy` | Fake Meshy server for testing generation and colors without spending credits (see `tests/mocks/meshy-mock.js` for how to point the app at it) |
+| `npm run stress` | API load and rate-limit test plus geometry performance benchmark (slower; run before demos) |
+| `python tests/e2e/smoke_test.py` | End-to-end browser test with screenshots. Needs `npm start` running and `pip install playwright` then `python -m playwright install chromium` once |
 
 ## Project layout
 
@@ -58,7 +61,7 @@ server/                 Node + Express
   services/             Meshy and Claude API clients
   prompts/              Assistant prompts
   db/projectStore.js    Project storage (JSON file today; swap for a real database)
-tests/                  node:test suites
+tests/                  node:test suites, stress/ (load + performance), e2e/ (browser)
 docs/ARCHITECTURE.md    How the pieces fit and how to extend them
 ```
 
@@ -79,5 +82,6 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before your first pull request, and [doc
 - Print time and filament are estimates from volume and surface area. A slicer gives exact numbers.
 - Marketplace fees in `catalog.js` are estimates and change over time.
 - Letters are raised, not engraved (engraving needs a 3D boolean library).
+- The chat sends anything the built-in templates can't make (animals, figures, sculptures) to Meshy, so that needs a Meshy key. Blocked content is filtered by keyword lists in `public/js/config/content-rules.js` and then by Meshy's own moderation; keyword lists can't catch every wording.
 - Imported meshes are kept in the browser, not in the project library.
 - Rate limits are in memory and reset when the server restarts.

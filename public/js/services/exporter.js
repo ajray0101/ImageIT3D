@@ -38,10 +38,11 @@ export function pricingCSV(P) {
 
 export const listingText = l => `TITLE\n${l.title}\n\nDESCRIPTION\n${l.description}\n\nTAGS\n${l.tags}\n`;
 
-export async function buildPackage({ state, current, colorName, dims, slug }) {
+export async function buildPackage({ state, current, colorName, dims, slug, colorGlb = null }) {
   if (typeof JSZip === "undefined") throw new Error("The zip tool didn't load. Download the model on its own instead.");
   const z = new JSZip();
   z.file(`${slug}.stl`, toSTL(current.mesh, state.spec.name));
+  if (colorGlb) z.file(`${slug}-color.glb`, colorGlb);
   z.file("listing.txt", listingText(state.listing));
   z.file("printability-report.txt", reportText({ state, current, colorName, dims }));
   z.file("pricing.csv", pricingCSV(current.price));
