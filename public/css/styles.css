@@ -172,3 +172,15 @@ dialog ul{padding-left:20px;margin:8px 0}
 #colorTools{margin-top:18px}
 #colorTools h3{font-size:1rem;margin-bottom:2px}
 .viewmode[hidden]{display:none}
+
+/* Fix printability */
+.fixbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 16px}
+.fixbar .note{margin:0}
+.fixreport{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 16px;background:var(--paper)}
+.fixreport[hidden]{display:none}
+.fixreport h3{font-size:1rem;margin:0 0 4px}
+.fixreport ul{margin:4px 0 10px;padding-left:20px}
+.fixreport li{margin:3px 0}
+.fixreport .done li::marker{color:var(--pass)}
+.fixreport .left li::marker{color:var(--warn)}
+.fixreport .actions{margin-top:4px}

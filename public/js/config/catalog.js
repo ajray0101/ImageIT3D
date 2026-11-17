@@ -32,7 +32,8 @@ export const TEMPLATES = {
   }},
   imported: { label: "Imported model", params: {
     height: { label: "Height", unit: "mm", min: 10, max: 250, step: 1, def: 100 },
-    turn:   { label: "Tip over", unit: "°", min: 0, max: 270, step: 90, def: 0 }
+    turn:   { label: "Tip over", unit: "°", min: 0, max: 270, step: 90, def: 0 },
+    base:   { label: "Display base (0 = off, 1 = on)", unit: "", min: 0, max: 1, step: 1, def: 0 }
   }}
 };
 

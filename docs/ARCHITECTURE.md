@@ -83,6 +83,15 @@ Add an entry to `PRINTERS`, `MATERIALS` or `MARKETS` in `public/js/config/catalo
 
 Edit the word lists in `public/js/config/content-rules.js`. The browser uses it for instant feedback, and the server imports the same file for the real check (`/api/meshy/preview` and `/api/assistant/design`), so one edit covers both. Add everyday products that contain a blocked word (like "bath bomb") to `SAFE_PHRASES`. Add a case to `tests/content.test.js` for every change. Meshy's own moderation (`moderation: true`) is a final layer after ours.
 
+### How "Fix printability" works
+
+The button on the Printability step (`public/js/ui/check.js`) runs two stages, then lists what it changed and what's left for the slicer, with an Undo:
+
+1. **Mesh repair** for imported and Meshy models (`geometry/repair.js`): removes duplicate and zero-area faces, loose debris and non-manifold fins, then fills holes.
+2. **Setting changes** (`analysis/autofix.js`, `planFixes`): adds a display base (`geometry/shapes/base.js`) when a model can't stand, scales anything too big to fit the printer, thickens thin walls, softens vessel flare and belly, and enlarges small letters. It re-checks after each round.
+
+Every check in `evaluate()` has an `id` (`fit`, `watertight`, `walls`, `letters`, `overhang`, `contact`). To make a new check fixable, give it an id, add a rule in `planFixes`, and add advice for it in `leftoverAdvice`.
+
 ### Add a printability check
 
 In `evaluate()` in `public/js/analysis/printability.js`, push another `{ l: "pass" | "warn" | "fail", t: "Short title", d: "What it means and how to fix it" }`. Any measurement it needs goes in `analyze()`. Add a test in `tests/geometry.test.js`.
