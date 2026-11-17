@@ -25,22 +25,33 @@ export function createViewer(container, { color }) {
   // Full-color model from Meshy (textured GLB scene), shown instead of the filament-colored mesh.
   const colorOuter = new THREE.Group(), colorInner = new THREE.Group();
   colorOuter.add(colorInner); colorOuter.visible = false; scene.add(colorOuter);
-  let hasColor = false, colorOn = false, colorTurn = 0;
+  let hasColor = false, colorOn = false, colorTurn = 0, frame = null;
+  // In full-color view the printable mesh is hidden, so the display base (if any) is drawn separately.
+  let baseMesh = null;
 
-  // Place the color model exactly where the printable mesh is: same tilt, height and position.
+  // Place the color model exactly where the printable model is: same tilt, height and position.
   function fitColor() {
-    if (!hasColor || !mesh) return;
+    if (!hasColor || !frame) return;
     colorInner.rotation.set(colorTurn * Math.PI / 180, 0, 0);
     colorOuter.scale.setScalar(1); colorOuter.position.set(0, 0, 0); colorOuter.updateMatrixWorld(true);
     let box = new THREE.Box3().setFromObject(colorInner);
-    colorOuter.scale.setScalar(mesh.userData.h / Math.max(box.max.y - box.min.y, 1e-6));
+    colorOuter.scale.setScalar(frame.height / Math.max(box.max.y - box.min.y, 1e-6));
     colorOuter.updateMatrixWorld(true);
     box = new THREE.Box3().setFromObject(colorInner);
-    colorOuter.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+    colorOuter.position.set(frame.cx - (box.min.x + box.max.x) / 2, frame.bottom - box.min.y, frame.cz - (box.min.z + box.max.z) / 2);
   }
   function applyVisibility() {
-    colorOuter.visible = hasColor && colorOn;
-    if (mesh) mesh.visible = !(hasColor && colorOn);
+    const color = hasColor && colorOn;
+    colorOuter.visible = color;
+    if (mesh) mesh.visible = !color;
+    if (baseMesh) baseMesh.visible = color;
+  }
+  function setBase(base) {
+    if (baseMesh) { scene.remove(baseMesh); baseMesh.geometry.dispose(); baseMesh = null; }
+    if (!base) return;
+    baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(base.radius, base.radius, base.thickness, 72), material);
+    baseMesh.position.set(base.cx, base.thickness / 2, base.cz);
+    scene.add(baseMesh);
   }
 
   function resize() {
@@ -100,6 +111,8 @@ export function createViewer(container, { color }) {
       mesh = new THREE.Mesh(flat, material);
       flat.computeBoundingBox(); const bb = flat.boundingBox; mesh.userData.h = bb.max.y;
       scene.add(mesh);
+      frame = m.frame || null;
+      setBase(m.base || null);
       fitColor(); applyVisibility();
       if (animate) {
         const size = bb.getSize(new THREE.Vector3()), r = Math.max(size.x, size.y, size.z, 40);

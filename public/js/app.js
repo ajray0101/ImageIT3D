@@ -65,9 +65,12 @@ const ctx = {
   },
 
   // meshyTask: { id, prompt } when the mesh came from Meshy (needed to add colors later).
-  async setImported(mesh, meshyTask = null) {
-    ctx.imported = mesh; state.meshyTask = meshyTask; state.showColor = false;
+  // keepColor: a repair of the same model keeps its Meshy task and colors.
+  async setImported(mesh, meshyTask = null, { keepColor = false } = {}) {
+    ctx.imported = mesh;
     await blobStore.set("import", mesh);
+    if (keepColor) return;
+    state.meshyTask = meshyTask; state.showColor = false;
     await ctx.setColorBuffer(null);
   },
   hasColor: () => Boolean(ctx.colorBuffer),

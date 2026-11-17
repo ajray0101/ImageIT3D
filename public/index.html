@@ -104,6 +104,11 @@
           <div class="field"><label for="material">Material</label><select id="material"><option value="PLA">PLA</option><option value="PETG">PETG</option></select></div>
           <div class="field"><label for="infill">Infill <output id="infillOut"></output></label><input type="range" id="infill" min="5" max="60" step="5"></div>
         </div>
+        <div class="fixbar" id="fixBar" hidden>
+          <button class="btn" id="fixBtn">Fix printability</button>
+          <span class="note">Repairs the model and adjusts its settings automatically. You can undo it.</span>
+        </div>
+        <div class="fixreport" id="fixReport" aria-live="polite" hidden></div>
         <ul class="checks" id="checks"></ul>
         <dl class="stats" id="stats"></dl>
         <p class="note">Filament and time are estimates from model volume and surface area at 0.2 mm layers. Your slicer will give exact numbers.</p>

@@ -59,5 +59,6 @@ export function groundAndCenter(m) {
   const { min, max } = bounds(m.pos);
   const off = [-(min[0] + max[0]) / 2, -min[1], -(min[2] + max[2]) / 2];
   for (let i = 0; i < m.pos.length; i += 3) for (let k = 0; k < 3; k++) m.pos[i + k] += off[k];
+  m.offset = off;
   return m;
 }
